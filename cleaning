@@ -1,0 +1,94 @@
+library(tidyverse)
+library(dplyr)
+library(lubridate)
+# Import data set
+w <- read_csv("Desktop/school/COMAP/wordle.csv")
+# duplicate word column
+w <-w %>% 
+  mutate(word=Word)
+# Separates word column by letter into 6 new columns: NA (empty), L1 (letter 1), L2, L3, L4, L5
+w<-w %>% 
+  separate(col = word, into = c("NA","L1","L2","L3","L4","L5"),sep = "")
+# Remove Errors: 
+    # remove row of any word with the wrong # characters [ex: rprobe]
+word_length <- nchar(w$Word)
+word_length
+w$length <- ifelse(word_length==5,1,0) 
+w<-w[w$length==1,]
+    # removes row of any word with a non alphabet letter [ex: naïve] 
+w$L1error<-ifelse(w$L1=='a'|w$L1=='b'|w$L1=='c'|w$L1=='d'|w$L1=='e'|w$L1=='f'|w$L1=='g'|w$L1=='h'|w$L1=='i'|w$L1=='j'|w$L1=='k'|w$L1=='l'|w$L1=='m'|w$L1=='n'|w$L1=='o'|w$L1=='p'|w$L1=='q'|w$L1=='r'|w$L1=='s'|w$L1=='t'|w$L1=='u'|w$L1=='v'|w$L1=='w'|w$L1=='x'|w$L1=='y'|w$L1=='z',1,0)
+w$L2error<-ifelse(w$L2=='a'|w$L2=='b'|w$L2=='c'|w$L2=='d'|w$L2=='e'|w$L2=='f'|w$L2=='g'|w$L2=='h'|w$L2=='i'|w$L2=='j'|w$L2=='k'|w$L2=='l'|w$L2=='m'|w$L2=='n'|w$L2=='o'|w$L2=='p'|w$L2=='q'|w$L2=='r'|w$L2=='s'|w$L2=='t'|w$L2=='u'|w$L2=='v'|w$L2=='w'|w$L2=='x'|w$L2=='y'|w$L2=='z',1,0)
+w$L3error<-ifelse(w$L3=='a'|w$L3=='b'|w$L3=='c'|w$L3=='d'|w$L3=='e'|w$L3=='f'|w$L3=='g'|w$L3=='h'|w$L3=='i'|w$L3=='j'|w$L3=='k'|w$L3=='l'|w$L3=='m'|w$L3=='n'|w$L3=='o'|w$L3=='p'|w$L3=='q'|w$L3=='r'|w$L3=='s'|w$L3=='t'|w$L3=='u'|w$L3=='v'|w$L3=='w'|w$L3=='x'|w$L3=='y'|w$L3=='z',1,0)
+w$L4error<-ifelse(w$L4=='a'|w$L4=='b'|w$L4=='c'|w$L4=='d'|w$L4=='e'|w$L4=='f'|w$L4=='g'|w$L4=='h'|w$L4=='i'|w$L4=='j'|w$L4=='k'|w$L4=='l'|w$L4=='m'|w$L4=='n'|w$L4=='o'|w$L4=='p'|w$L4=='q'|w$L4=='r'|w$L4=='s'|w$L4=='t'|w$L4=='u'|w$L4=='v'|w$L4=='w'|w$L4=='x'|w$L4=='y'|w$L4=='z',1,0)
+w$L5error<-ifelse(w$L5=='a'|w$L5=='b'|w$L5=='c'|w$L5=='d'|w$L5=='e'|w$L5=='f'|w$L5=='g'|w$L5=='h'|w$L5=='i'|w$L5=='j'|w$L5=='k'|w$L5=='l'|w$L5=='m'|w$L5=='n'|w$L5=='o'|w$L5=='p'|w$L5=='q'|w$L5=='r'|w$L5=='s'|w$L5=='t'|w$L5=='u'|w$L5=='v'|w$L5=='w'|w$L5=='x'|w$L5=='y'|w$L5=='z',1,0)
+w<-w[w$L1error==1 & w$L2error==1 & w$L3error==1 & w$L4error==1 & w$L5error==1 ,]
+  # Remove outliers for reported responses
+w <- w %>% 
+  filter(`Number of  reported results`>=5000 & `Number of  reported results`<=450000)
+  # Remove NA rows
+w<-na.omit(w)
+# Create Custom 
+    #repeats 
+  # Letter is repeated 3 times
+w$repeats_3 <- ifelse(w$L1 == w$L2 & w$L1 == w$L3 | w$L1 == w$L2 & w$L1 == w$L4 | w$L1 == w$L2 & w$L1 == w$L5 |w$L1 == w$L3 & w$L1 == w$L4 |  w$L1 == w$L3 & w$L1 == w$L5 | w$L1 == w$L4 & w$L1 == w$L5 |w$L2 == w$L3 & w$L2 == w$L4 | w$L2 == w$L3 & w$L2 == w$L5 | w$L2 == w$L4 & w$L2 == w$L5 | w$L3 == w$L4 & w$L3 == w$L5,1,0)
+  # Letter is repeated 2 times
+w$repeats_2 <- ifelse(w$L1 == w$L2 & w$repeats_3!=1 | w$L1 == w$L3 & w$repeats_3!=1 | 
+w$L1 == w$L4 & w$repeats_3!=1 |  w$L1 == w$L5 & w$repeats_3!=1 |w$L2 == w$L3 & w$repeats_3!=1 | w$L2 == w$L4 & w$repeats_3!=1 |  w$L2 == w$L5 & w$repeats_3!=1 | w$L3 == w$L4 & w$repeats_3!=1 | w$L3 == w$L5 & w$repeats_3!=1 |w$L4 == w$L5 & w$repeats_3!=1,1,0) 
+  # Letter is never repeated
+w$repeats_0 <- ifelse(w$repeats_2 == 0 & w$repeats_3 == 0, 1, 0)
+    #vowels
+  # Vowels in L1:L5
+w$vowels_L1 <-ifelse(w$L1=='a'|w$L1=='e'|w$L1=='i'|w$L1=='o'|w$L1=='u',1,0)
+w$vowels_L2 <-ifelse(w$L2=='a'|w$L2=='e'|w$L2=='i'|w$L2=='o'|w$L2=='u',1,0)
+w$vowels_L3 <-ifelse(w$L3=='a'|w$L3=='e'|w$L3=='i'|w$L3=='o'|w$L3=='u',1,0)
+w$vowels_L4 <-ifelse(w$L4=='a'|w$L4=='e'|w$L4=='i'|w$L4=='o'|w$L4=='u',1,0)
+w$vowels_L5 <-ifelse(w$L5=='a'|w$L5=='e'|w$L5=='i'|w$L5=='o'|w$L5=='u',1,0)
+  # Total Vowels
+vowel_sum<-rowSums(w[,c("vowels_L1","vowels_L2","vowels_L3","vowels_L4","vowels_L5")])
+w<-cbind(w,vowel_sum)
+    #Rank
+  # Rank letters in L1:L5
+w$L1_rank<-ifelse(w$L1=='e'|w$L1=='s',1,ifelse(w$L1=='a',2,ifelse(w$L1=='r',3,ifelse(w$L1=='i'|w$L1=='l'|w$L1=='o'|w$L1=='t',4,ifelse(w$L1=='n',5,ifelse(w$L1=='c'|w$L1=='d'|w$L1=='p'|w$L1=='u', 6,ifelse(w$L1=='b'|w$L1=='g'|w$L1=='h'|w$L1=='m'|w$L1=='y',7,ifelse(w$L1=='f'|w$L1=='k'|w$L1=='v'|w$L1=='w',8,ifelse(w$L1=='j'|w$L1=='x'|w$L1=='z',9,ifelse(w$L1=='q',10,0))))))))))
+w$L2_rank<-ifelse(w$L2=='e'|w$L2=='s',1,ifelse(w$L2=='a',2,ifelse(w$L2=='r',3,ifelse(w$L2=='i'|w$L2=='l'|w$L2=='o'|w$L2=='t',4,ifelse(w$L2=='n',5,ifelse(w$L2=='c'|w$L2=='d'|w$L2=='p'|w$L2=='u',6,ifelse(w$L2=='b'|w$L2=='g'|w$L2=='h'|w$L2=='m'|w$L2=='y',7,ifelse(w$L2=='f'|w$L2=='k'|w$L2=='v'|w$L2=='w',8,ifelse(w$L2=='j'|w$L2=='x'|w$L2=='z',9,ifelse(w$L2=='q',10,0))))))))))
+w$L3_rank <-ifelse(w$L3=='e'|w$L3=='s',1,ifelse(w$L3=='a', 2,ifelse(w$L3=='r', 3,ifelse(w$L3=='i'|w$L3=='l'|w$L3=='o'|w$L3=='t',4,ifelse(w$L3=='n',5,ifelse(w$L3=='c'|w$L3=='d'|w$L3=='p'|w$L3=='u',6,ifelse(w$L3=='b'|w$L3=='g'|w$L3=='h'|w$L3=='m'|w$L3=='y',7,ifelse(w$L3=='f'|w$L3=='k'|w$L3=='v'|w$L3=='w',8,ifelse(w$L3=='j'|w$L3=='x'|w$L3=='z',9,ifelse(w$L3=='q',10,0))))))))))
+w$L4_rank <-ifelse(w$L4=='e'|w$L4=='s',1,ifelse(w$L4=='a', 2,ifelse(w$L4=='r', 3,ifelse(w$L4=='i'|w$L4=='l'|w$L4=='o'|w$L4=='t',4,ifelse(w$L4=='n',5,ifelse(w$L4=='c'|w$L4=='d'|w$L4=='p'|w$L4=='u',6,ifelse(w$L4=='b'|w$L4=='g'|w$L4=='h'|w$L4=='m'|w$L4=='y',7,ifelse(w$L4=='f'|w$L4=='k'|w$L4=='v'|w$L4=='w',8,ifelse(w$L4=='j'|w$L4=='x'|w$L4=='z',9,ifelse(w$L4=='q',10,0))))))))))
+w$L5_rank <-ifelse(w$L5=='e'|w$L5=='s',1, ifelse(w$L5=='a', 2,ifelse(w$L5=='r', 3,ifelse(w$L5=='i'|w$L5=='l'|w$L5=='o'|w$L5=='t',4, ifelse(w$L5=='n',5,                                            ifelse(w$L5=='c'|w$L5=='d'|w$L5=='p'|w$L5=='u',6,ifelse(w$L5=='b'|w$L5=='g'|w$L5=='h'|w$L5=='m'|w$L5=='y',7,ifelse(w$L5=='f'|w$L5=='k'|w$L5=='v'|w$L5=='w',8,ifelse(w$L5=='j'|w$L5=='x'|w$L5=='z',9,ifelse(w$L5=='q',10,0))))))))))
+  # total sum
+rank_sum<-rowSums(w[,c("L1_rank","L2_rank", "L3_rank","L4_rank","L5_rank")])                    
+w<-cbind(w,rank_sum)
+    #Day of the week 
+# Create duplicate of Date column with new name: `dDate`
+w<-w %>% 
+  mutate(dDate=Date)
+# fix format of `dDate` (from mm/dd/yy to yyyy-mm-dd) *this allows us to use wday() function in r
+w$newdate <- strptime(as.character(w$dDate), "%m/%d/%y")
+# create new custom column that outputs the weekday
+w$weekday<-wday(w$newdate,label=TRUE,abbr=FALSE)
+  # Create Binary columns per day of week (sun-sat)
+w$is.sun <- ifelse(w$weekday=='Sunday', 1, 0)
+w$is.mon <- ifelse(w$weekday=='Monday', 1, 0)
+w$is.tue <- ifelse(w$weekday=='Tuesday', 1, 0)
+w$is.wed <- ifelse(w$weekday=='Wednesday', 1, 0)
+w$is.thur <- ifelse(w$weekday=='Thursday', 1, 0)
+w$is.fri <- ifelse(w$weekday=='Friday', 1, 0)
+w$is.sat <- ifelse(w$weekday=='Saturday', 1, 0)
+  # Create Binary column for `is a weekend`
+w$is.weekend<-ifelse(w$is.sun==1 | w$is.sat==1, 1,0)
+    # Level of Difficulty   # Creating Sums of percentage of tries: [sum in 1 try, sum in 1&2 tries, ... , sum in 6&7+ tries, sum in 7+ tries]
+sum1 <- w$`1 try` 
+sum12 <- w$`1 try`+w$`2 tries`
+sum123 <- w$`1 try`+w$`2 tries`+w$`3 tries`
+sum1234 <- w$`1 try`+w$`2 tries`+w$`3 tries`+w$`4 tries`
+sum12345 <- w$`1 try`+w$`2 tries`+w$`3 tries`+w$`4 tries`+w$`5 tries`
+sum123456 <- w$`1 try`+w$`2 tries`+w$`3 tries`+w$`4 tries`+w$`5 tries`+w$`6 tries`
+sum234567 <- w$`2 tries`+w$`3 tries`+w$`4 tries`+w$`5 tries`+w$`6 tries`+w$`7 or more tries (X)`
+sum34567 <- w$`3 tries`+w$`4 tries`+w$`5 tries`+w$`6 tries`+w$`7 or more tries (X)`
+sum4567 <- w$`4 tries`+w$`5 tries`+w$`6 tries`+w$`7 or more tries (X)`
+sum567 <- w$`5 tries`+w$`6 tries`+w$`7 or more tries (X)`
+sum67 <- w$`6 tries`+w$`7 or more tries (X)`
+sum7 <- w$`7 or more tries (X)`
+  # Create a custom Difficulty score [1(easiest):7(hardest)] column, based on the majority needed tries used to complete word
+difficulty<-ifelse(sum1==sum234567 | sum1>sum234567,1,ifelse(sum12==sum34567 | sum12>sum34567 & sum1<sum234567, 2,ifelse(sum123==sum4567 | sum123>sum4567 & sum12<sum34567 & sum1<sum234567, 3,ifelse(sum1234>sum567 & sum123<sum4567 & sum12<sum34567 & sum1<sum234567, 4,ifelse(sum567==sum1234 | sum567>sum1234 & sum67<sum12345 & sum7<sum123456, 5, ifelse(sum67==sum12345 | sum67>sum12345 & sum7<sum123456, 6,ifelse(sum7==sum123456 | sum7>sum123456,7,0)))))))
+w<-cbind(w,difficulty)
+    # Proportion reported in Hard Mode 
+w$prop_in_hard<-w$`Number in hard mode`/w$`Number of  reported results`
